@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Book Manager</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/utility.css">
+</head>
+<body>
+  <header class="flex justify-space-between align-center container">
+    <div class="nav-left flex justify-space-between">
+      <p class="logo">BookGasm</p>
+      <form class="nav-search" method="GET" action="/">
+        <input class="nav-search-bar" type="text" name="q" value="<%= query %>" placeholder="Search books...">
+        <button class="nav-search-logo" type="submit">
+          <svg fill="rgb(146, 146, 146)" height="22px" role="img" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M10.533 1.27893C5.35215 1.27893 1.12598 5.41887 1.12598 10.5579C1.12598 15.697 5.35215 19.8369 10.533 19.8369C12.767 19.8369 14.8235 19.0671 16.4402 17.7794L20.7929 22.132C21.1834 22.5226 21.8166 22.5226 22.2071 22.132C22.5976 21.7415 22.5976 21.1083 22.2071 20.7178L17.8634 16.3741C19.1616 14.7849 19.94 12.7634 19.94 10.5579C19.94 5.41887 15.7138 1.27893 10.533 1.27893ZM3.12598 10.5579C3.12598 6.55226 6.42768 3.27893 10.533 3.27893C14.6383 3.27893 17.94 6.55226 17.94 10.5579C17.94 14.5636 14.6383 17.8369 10.533 17.8369C6.42768 17.8369 3.12598 14.5636 3.12598 10.5579Z"></path>
+          </svg>
+        </button>
+      </form>
+    </div>
+    <div class="nav-right flex justify-space-betwen">
+      <a href="/add" class="add-book-btn">+ Add Book</a>
+      <button class="login-btn">Log In</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="content-title flex justify-space-between mt-5">
+      <p class="your-books"><strong>📚</strong> Your Books</p>
+      <form method="GET" action="/" class="sort-form">
+        <input type="hidden" name="q" value="<%= query %>">
+        <select class="sort-btn" name="sort" onchange="this.form.submit()">
+          <option value="">Sort By</option>
+          <option value="title" <%= sort === 'title' ? 'selected' : '' %>>Title</option>
+          <option value="rating" <%= sort === 'rating' ? 'selected' : '' %>>Rating</option>
+        </select>
+      </form>
+    </div>
+
+    <div class="book-list">
+      <% if (books.length === 0) { %>
+        <p>No books found.</p>
+      <% } %>
+      <% books.forEach(book => { %>
+        <div class="book-card">
+        <img src="<%= book.image %>" alt="<%= book.title %>" style="display:inline">
+          <div class="book-card-content">
+            <div class="book-info">
+              <p class="title"><%= book.title %></p>
+              <p class="author">by <%= book.author %></p>
+              <p class="summary"><%= book.summary %></p>
+            </div>
+            <div class="card-footer">
+              <p><strong>Rating:</strong> <%= book.rating %> ⭐</p>
+              <div class="actions flex">
+                <a href="<%= book.link %>" target="_blank">
+                  <button class="buy-btn">Buy Book</button>
+                </a>
+                <form method="POST" action="/delete/<%= book.id %>">
+                  <button type="submit" class="delete-btn">Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </main>
+</body>
+</html>
