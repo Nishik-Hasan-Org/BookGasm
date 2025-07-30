@@ -19,6 +19,9 @@ app.use(
     secret: process.env.SESSION_SECRET, // Secret for encrypting the session
     resave: false,
     saveUninitialized: true,
+       cookie: {
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+    }
   })
 );
 app.use(express.urlencoded({ extended: true }));  //giving the requests the body
@@ -38,17 +41,17 @@ user: process.env.DB_USER,
 db.connect();
 
 // ✅ getBooks Function
-async function getBooks(searchQuery = "") {
+async function getBooks(searchQuery = "", userId) {
   books = []       //resets the books
   let result;
   try {
     if (searchQuery.length > 0) {  //checks for any search
-      result = await db.query(
-        "SELECT * FROM books WHERE title ILIKE $1",
-        [`%${searchQuery}%`]
+ result = await db.query(
+        "SELECT * FROM books WHERE user_id = $1 AND title ILIKE $2",
+        [userId, `%${searchQuery}%`]
       );
     } else {
-      result = await db.query("SELECT * FROM books");
+      result = await db.query("SELECT * FROM books WHERE user_id = $1",[userId]);
     }
     return result.rows;
   } catch (err) {
@@ -60,51 +63,62 @@ app.get("/",async(req,res)=>{
   res.render("home.ejs");
 });
 // ✅ Route to handle both default and search
-app.get("/books", async (req, res) => {  //hits the books page
-  if(req.isAuthenticated()){
-  //Authenticate
-  const searchQuery = req.query.q || "";
-  books = await getBooks(searchQuery);
-  let sort = req.query.sort;
-  if(sort === 'rating'){
-    const result = await db.query("SELECT * FROM books ORDER BY rating DESC ");
-    books = result.rows;
+app.get("/books", async (req, res) => {
+  if (req.isAuthenticated()) {
+    const searchQuery = req.query.q || "";
+    const userId = req.user.user_id;
+    books = await getBooks(searchQuery, userId);
+
+    const sort = req.query.sort;
+    if (sort === "rating") {
+      const result = await db.query(
+        "SELECT * FROM books WHERE user_id = $1 ORDER BY rating DESC",
+        [userId]
+      );
+      books = result.rows;
+    } else if (sort === "title") {
+      const result = await db.query(
+        "SELECT * FROM books WHERE user_id = $1 ORDER BY title ASC",
+        [userId]
+      );
+      books = result.rows;
+    }
+
+    res.render("index.ejs", {
+      query: searchQuery,
+      books: books,
+      sort: sort
+    });
+  } else {
+    res.send("<h1> Not Authenticated</h1>");
   }
-  if(sort === 'title'){
-    const result = await db.query("SELECT * FROM books ORDER BY title ASC ");
-    books = result.rows;
-  }
-  res.render("index.ejs", {
-    query: searchQuery,
-    books: books,
-    sort: sort
-  });
-}
-else{
-  res.send("<h1> Not Authenticated</h1>")
-}
 });
 
 app.get('/add',(req,res)=>{ //renders the add page
-  
+
   res.render("book-form.ejs");
 });
 
 app.post('/add',async(req,res)=>{   //add route
+     
 
  try{ 
-   
+    console.log(req.body)
     const { id, title, author, summary, link, rating } = req.body;
   const result = await db.query("SELECT * FROM books WHERE id = $1",[id]);
-  
+  console.log(req.body);
   if(result.rows.length >0){
          res.send(`<h1>${result}</h1>`)
 
 }
   else{
     const image = `https://covers.openlibrary.org/b/isbn/${id}-M.jpg`;
-  await db.query("INSERT INTO books (id,title,author,summary,image,link,rating) VALUES ($1,$2,$3,$4,$5,$6,$7) ",[id, title, author, summary, image, link, rating ]);
-  res.redirect("/");
+  await db.query(
+        "INSERT INTO books (id, title, author, summary, image, link, rating, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        [id, title, author, summary, image, link, rating, req.user.user_id]
+      );
+
+  res.redirect("/books");
   }
 }
   catch(err){
@@ -115,8 +129,8 @@ app.post('/add',async(req,res)=>{   //add route
 app.post('/delete/:id', async(req,res)=>{  //deleting books via id
     try{
       console.log(req.params.id);
-        await db.query("DELETE FROM books WHERE id = $1",[req.params.id]);
-        res.redirect("/");
+        await db.query("DELETE FROM books WHERE id = $1 && user_id = $2",[req.params.id,req.user.user_id]);
+        res.redirect("/books");
     }
     catch(err){
       console.log(err.stack);
@@ -130,7 +144,7 @@ app.get("/auth/google",
 app.get("/auth/google/books",
    passport.authenticate("google", {
     successRedirect: "/books",
-    failureRedirect: "/homw",
+    failureRedirect: "/home",
   })
 )
 passport.use("google",
@@ -163,12 +177,22 @@ passport.use("google",
 );
 
 passport.serializeUser((user, cb) => {
-  cb(null, user);
+  cb(null, user.user_id);
 });
 
-passport.deserializeUser((user, cb) => {
-  cb(null, user);
+passport.deserializeUser(async (id, cb) => {
+  try {
+    const result = await db.query("SELECT * FROM users WHERE user_id = $1", [id]);
+    if (result.rows.length > 0) {
+      cb(null, result.rows[0]); // pass the full user object to req.user
+    } else {
+      cb(new Error("User not found"));
+    }
+  } catch (err) {
+    cb(err);
+  }
 });
+
 
 
 app.listen(port, ()=>{
