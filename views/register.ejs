@@ -7,7 +7,7 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap"
       rel="stylesheet"
     />
- <style>
+<style>
   * {
     box-sizing: border-box;
   }
@@ -22,7 +22,7 @@
     height: 100vh;
   }
 
-  .login-container {
+  .sign-container {
     background-color: #a5d6a7;
     padding: 40px;
     border-radius: 15px;
@@ -32,16 +32,14 @@
     text-align: center;
   }
 
-  .login-container h2 {
+  .sign-container h2 {
     margin-bottom: 20px;
     color: #1b5e20;
   }
 
   input[type="text"],
   input[type="password"],
-  .login-btn,
-  .signup-btn,
-  .google-btn {
+  .sign-btn {
     width: 100%;
     padding: 12px;
     margin: 10px 0;
@@ -55,55 +53,27 @@
     border: none;
   }
 
-  .login-btn {
+  .sign-btn {
     background-color: #2e7d32;
     color: white;
     border: none;
   }
 
-  .signup-btn {
-    background-color: #ffffff;
-    color: #2e7d32;
-    border: 2px solid #2e7d32;
-  }
 
-  .google-btn {
-    background-color: #ffffff;
-    color: #4285f4;
-    border: 2px solid #4285f4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-
-  .google-btn img {
-    width: 20px;
-    height: 20px;
-  }
 </style>
 
   </head>
 
   <body>
-    <div class="login-container">
+    <div class="sign-container">
       <h2>BookGasm</h2>
 
-      <form action="/" method="POST">
-        <input type="text" name="username" placeholder="Email" required />
+      <form action="/register" method="POST">
+        <input type="text" name="email" placeholder="Email" required />
         <input type="password" name="password" placeholder="Password" required />
-        <button class="login-btn" type="submit">Login</button>
+        <button class="sign-btn" type="submit">Sign Up</button>
       </form>
 
-      <form action="/register" method="GET">
-        <button class="signup-btn">Sign Up</button>
-      </form>
-
-      <form action="/auth/google" method="GET">
-        <button class="google-btn">
-          <img src="/logo.png"alt="google logo" />
-          Sign in with Google
-        </button>
       </form>
     </div>
   </body>

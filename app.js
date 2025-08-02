@@ -63,7 +63,7 @@ app.get("/",async(req,res)=>{ //homepage
   res.render("home.ejs");
 });
 app.get("/register",async(req,res)=>{//signup page
-  res.render("rejister.ejs");
+  res.render("register.ejs");
 })
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
@@ -161,7 +161,7 @@ app.get("/auth/google",
 app.get("/auth/google/books",
    passport.authenticate("google", {
     successRedirect: "/books",
-    failureRedirect: "/home",
+    failureRedirect: "/",
   })
   
 )
@@ -207,8 +207,8 @@ passport.use("google",
           const result = await db.query("SELECT * FROM users WHERE email = $1", [profile.email,]);
           if(result.rows.length === 0){
             const newUser = await db.query(
-            "INSERT INTO users (email, password) VALUES ($1, $2)",
-            [profile.email, "google"]
+            "INSERT INTO users (email) VALUES ($1)",
+            [profile.email]
           );
            return cb(null, result.rows[0]);
         }
