@@ -18,7 +18,7 @@
         height: 100vh;
       }
 
-      .login-container {
+      .sign-container {
         background-color: #a5d6a7;
         padding: 40px;
         border-radius: 15px;
@@ -81,24 +81,15 @@
   </head>
 
   <body>
-    <div class="login-container">
+    <div class="sign-container">
       <h2>BookGasm</h2>
 
-      <form action="/" method="POST">
-        <input type="text" name="username" placeholder="Email" required />
+      <form action="/register" method="POST">
+        <input type="text" name="email" placeholder="Email" required />
         <input type="password" name="password" placeholder="Password" required />
-        <button class="login-btn" type="submit">Login</button>
+        <button class="login-btn" type="submit">Sign Up</button>
       </form>
 
-      <form action="/register" method="GET">
-        <button class="signup-btn">Sign Up</button>
-      </form>
-
-      <form action="/auth/google" method="GET">
-        <button class="google-btn">
-          <img src="/logo.png"alt="google logo" />
-          Sign in with Google
-        </button>
       </form>
     </div>
   </body>

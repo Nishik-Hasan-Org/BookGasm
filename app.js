@@ -3,7 +3,7 @@ import pg from "pg"
 import env from "dotenv";
 import bcrypt from "bcrypt";
 import passport from "passport"; 
-import { Strategy } from "passport-local";
+import { Strategy as LocalStrategy } from "passport-local";
 import GoogleStrategy from "passport-google-oauth2";
 import session from "express-session";
 env.config();
@@ -59,8 +59,25 @@ async function getBooks(searchQuery = "", userId) {
     return [];
   }
 }
-app.get("/",async(req,res)=>{
+app.get("/",async(req,res)=>{ //homepage
   res.render("home.ejs");
+});
+app.get("/register",async(req,res)=>{//signup page
+  res.render("rejister.ejs");
+})
+app.post("/register", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    console.log(req.body);
+    console.log(password);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await db.query("INSERT INTO users (email, password) VALUES ($1, $2)", [email, hashedPassword]);
+    res.redirect("/");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error registering user");
+  }
 });
 // ✅ Route to handle both default and search
 app.get("/books", async (req, res) => {
@@ -146,7 +163,36 @@ app.get("/auth/google/books",
     successRedirect: "/books",
     failureRedirect: "/home",
   })
+  
 )
+app.post('/', 
+  passport.authenticate('local', {
+    successRedirect: '/books',
+    failureRedirect: '/',
+  })
+);
+passport.use(new LocalStrategy(
+  async function(username, password, done) {
+    try {
+      const result = await db.query("SELECT * FROM users WHERE email = $1", [username]);
+      const user = result.rows[0];
+
+      if (!user) {
+        return done(null, false, { message: "Incorrect username." });
+      }
+
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return done(null, false, { message: "Incorrect password." });
+      }
+
+      return done(null, user);
+    } catch (err) {
+      return done(err);
+    }
+  }
+));
+
 passport.use("google",
     new GoogleStrategy( 
       {
@@ -157,7 +203,7 @@ passport.use("google",
       },
       async (accessToken, refreshToken, profile, cb)=>{
         try{
-          console.log(profile);
+          // console.log(profile);
           const result = await db.query("SELECT * FROM users WHERE email = $1", [profile.email,]);
           if(result.rows.length === 0){
             const newUser = await db.query(
@@ -193,8 +239,12 @@ passport.deserializeUser(async (id, cb) => {
   }
 });
 
-
-
+app.post('/logout', function(req, res, next) {
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.redirect('/');
+  });
+});
 app.listen(port, ()=>{
   console.log(`BookGasm running at http://localhost:${port}`);
 })
